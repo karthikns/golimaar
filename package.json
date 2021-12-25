@@ -1,7 +1,7 @@
 {
-  "name": "goats4herd",
+  "name": "golimaar",
   "version": "1.0.0",
-  "description": "Goat Herding Game",
+  "description": "A Shooter Game",
   "main": "src/server/server.js",
   "scripts": {
     "build": "webpack --config webpack.prod.js",
@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/karthikns/goats4herd.git"
+    "url": "git+https://github.com/karthikns/golimaar.git"
   },
   "keywords": [],
   "author": "",
@@ -26,9 +26,9 @@
     "Girish Ramohalli (https://github.com/girishrg)"
   ],
   "bugs": {
-    "url": "https://github.com/karthikns/goats4herd/issues"
+    "url": "https://github.com/karthikns/golimaar/issues"
   },
-  "homepage": "https://github.com/karthikns/goats4herd#readme",
+  "homepage": "https://github.com/karthikns/golimaar#readme",
   "dependencies": {
     "bufferutil": "^4.0.1",
     "express": "^4.17.1",
