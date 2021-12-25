@@ -1,4 +1,4 @@
-# goats4herd - A Goat Herding Game
+# golimaar - A Shooter Game
 
 ## Game
 
