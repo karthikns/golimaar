@@ -62,10 +62,20 @@ function RenderDog(dog) {
         r: dog.r * scalingRatio,
     };
 
+    const gunX = scaledDog.x + dog.dirX * scaledDog.r;
+    const gunY = scaledDog.y + dog.dirY * scaledDog.r;
+
     context.fillStyle = dog.color;
     context.beginPath();
     context.arc(scaledDog.x, scaledDog.y, scaledDog.r, 0, 2 * Math.PI);
     context.fill();
+
+    context.strokeStyle = '#000000';
+    context.beginPath();
+    context.lineWidth = 2;
+    context.moveTo(scaledDog.x, scaledDog.y);
+    context.lineTo(gunX, gunY);
+    context.stroke();
 
     context.font = `${scaledDog.r}px Verdana`;
     context.textAlign = 'center';

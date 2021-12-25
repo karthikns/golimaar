@@ -36,6 +36,8 @@ module.exports = GoatGame;
             x: randGoalPost.spawnPoint.x,
             y: randGoalPost.spawnPoint.y,
             r: dogRadius,
+            dirX: 1,
+            dirY: 0,
             color: randGoalPost.color,
             name: `${myName}`,
             spriteFrame: {},
@@ -162,7 +164,7 @@ module.exports = GoatGame;
     }
 
     function MoveDog(dog, socketId, distanceToMove) {
-        var moveDirection = { x: 0, y: 0 };
+        let moveDirection = { x: 0, y: 0 };
         if (dog.input.key.left) {
             moveDirection.x += -1;
         }
@@ -180,6 +182,14 @@ module.exports = GoatGame;
         moveDirection = GoatMath.ScaleVec(moveDirection, distanceToMove);
         dog.x += moveDirection.x;
         dog.y += moveDirection.y;
+
+        let orientation = { x: 0, y: 0 };
+        orientation.x = dog.input.mouseTouch.x - dog.x;
+        orientation.y = dog.input.mouseTouch.y - dog.y;
+        orientation = GoatMath.NormalizeVec(orientation);
+
+        dog.dirX = orientation.x;
+        dog.dirY = orientation.y;
 
         DontAllowObjectToGoBeyondTheBoard(dog);
     }
