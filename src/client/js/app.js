@@ -23,21 +23,6 @@ const input = {
     isKeyBasedMovement: true,
 };
 
-function SpriteSheet(iPath, iFrameWidth, iFrameHeight) {
-    const image = new Image();
-    image.src = iPath;
-    const frameWidth = iFrameWidth;
-    const frameHeight = iFrameHeight;
-    this.draw = function DrawSpriteSheet(sx, sy, dx, dy, dFrameWidth, dFrameHeight) {
-        context.drawImage(image, sx, sy, frameWidth, frameHeight, dx, dy, dFrameWidth, dFrameHeight);
-    };
-}
-
-const spriteSheets = {};
-spriteSheets.dog = new SpriteSheet('img/dogsprite1.png', 547, 481);
-spriteSheets.goat = new SpriteSheet('img/goat_1.png', 682, 800);
-spriteSheets.background = new SpriteSheet('img/grass2.png', 600, 600);
-
 function KeyEvent(keyCode, isKeyPressed) {
     let hasInputChanged = false;
     switch (keyCode) {
@@ -77,61 +62,24 @@ function RenderDog(dog) {
         r: dog.r * scalingRatio,
     };
 
+    const gunX = scaledDog.x + dog.dirX * scaledDog.r;
+    const gunY = scaledDog.y + dog.dirY * scaledDog.r;
+
     context.fillStyle = dog.color;
-    if (GoatEnhancementHelpers.IsAnimationEnabled()) {
-        const offset = Math.sqrt(dog.r * scaledDog.r * 2) * 0.5;
-        spriteSheets.dog.draw(
-            context,
-            dog.spriteFrame.x,
-            dog.spriteFrame.y,
-            scaledDog.x - offset,
-            scaledDog.y - offset,
-            scaledDog.r * 2,
-            scaledDog.r * 2
-        );
+    context.beginPath();
+    context.arc(scaledDog.x, scaledDog.y, scaledDog.r, 0, 2 * Math.PI);
+    context.fill();
 
-        context.font = `${scaledDog.r * 0.5}px Verdana`;
-        context.textAlign = 'center';
-        context.fillText(dog.name, scaledDog.x, scaledDog.y - offset + 2.5 * scaledDog.r);
-    } else {
-        context.beginPath();
-        context.arc(scaledDog.x, scaledDog.y, scaledDog.r, 0, 2 * Math.PI);
-        context.fill();
+    context.strokeStyle = '#000000';
+    context.beginPath();
+    context.lineWidth = 2;
+    context.moveTo(scaledDog.x, scaledDog.y);
+    context.lineTo(gunX, gunY);
+    context.stroke();
 
-        context.font = `${scaledDog.r}px Verdana`;
-        context.textAlign = 'center';
-        context.fillText(dog.name, scaledDog.x, scaledDog.y + 2.5 * scaledDog.r);
-    }
-}
-
-function RenderGoat(goat) {
-    const scaledGoat = {
-        x: goat.x * scalingRatio,
-        y: goat.y * scalingRatio,
-        r: goat.r * scalingRatio,
-    };
-
-    if (GoatEnhancementHelpers.IsAnimationEnabled()) {
-        const offset = Math.sqrt(scaledGoat.r * scaledGoat.r * 2) * 0.5;
-        spriteSheets.goat.draw(
-            context,
-            0,
-            0,
-            scaledGoat.x - offset,
-            scaledGoat.y - offset,
-            scaledGoat.r * 2,
-            scaledGoat.r * 2
-        );
-    } else {
-        context.fillStyle = goat.color;
-        context.beginPath();
-        context.arc(scaledGoat.x, scaledGoat.y, scaledGoat.r, 0, 2 * Math.PI);
-        context.fill();
-
-        context.font = `${scaledGoat.r}px Verdana`;
-        context.textAlign = 'center';
-        context.fillText(goat.name, scaledGoat.x, scaledGoat.y + 2.5 * scaledGoat.r);
-    }
+    context.font = `${scaledDog.r}px Verdana`;
+    context.textAlign = 'center';
+    context.fillText(dog.name, scaledDog.x, scaledDog.y + 2.5 * scaledDog.r);
 }
 
 function RenderGoalPost(goalPost) {
@@ -179,16 +127,8 @@ function RenderMouseTracker() {
 function Render(world) {
     context.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
-    if (GoatEnhancementHelpers.IsAnimationEnabled()) {
-        spriteSheets.background.draw(context, 0, 0, 0, 0, canvasElement.width, canvasElement.height);
-    }
-
     Object.values(world.dogs).forEach((dog) => {
         RenderDog(dog);
-    });
-
-    world.goats.forEach((goat) => {
-        RenderGoat(goat, context);
     });
 
     world.goalPosts.forEach((goalPost) => {
