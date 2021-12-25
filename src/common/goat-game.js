@@ -1,7 +1,5 @@
-const GameAnimation = require('./animation');
 const GoatDiagnostics = require('./lib/goat-diagnostics');
 const GoatMath = require('./lib/goat-math');
-const goatNames = require('./goat-names.json');
 const GoatEnhancementHelpers = require('./goat-enhancement-helpers');
 
 const GoatGame = {};
@@ -11,30 +9,14 @@ module.exports = GoatGame;
 (function GoatGameNamespace() {
     // Configuration
     const dogRadius = 10;
-    const goatRadius = 10;
-    const numberOfGoats = 20;
     const dogSpeed = 500; // units per second
-    const goatSpeed = 100; // units per second
-    const goatScaredSpeed = 500;
-    const goatCollisionSpeed = 450;
-    const goatComfortZone = 75;
-    const goatDogDistance = 250; // How far do goats try to stay away from dogs?
     const diagnosticsIntervalMilliseconds = 5000;
     const goalPostRadius = 75;
     const scoreDecrementInterval = 3500;
 
-    // Animation branch overrides
-    // const dogRadius = 20;
-    // const goatRadius = 12.5;
-    // const dogSpeed = 400;
-    // const goatScaredSpeed = 275;
-
     GoatGame.board = { width: 800, height: 600 };
 
     GoatGame.onRenderState = function RenderStateDummy() {};
-
-    // Local Constants computed from config
-    const goatDogDistanceSquare = goatDogDistance * goatDogDistance;
 
     let telemetry;
     GoatGame.SetTelemetryObject = function SetTelemetryObject(goatTelemetry) {
@@ -49,8 +31,6 @@ module.exports = GoatGame;
 
     GoatGame.AddDog = function AddDog(socketId, myName, teamId) {
         const randGoalPost = world.goalPosts[teamId];
-
-        GameAnimation.AddDogAnimation(socketId);
 
         world.dogs[socketId] = {
             x: randGoalPost.spawnPoint.x,
@@ -91,21 +71,15 @@ module.exports = GoatGame;
             dog.input.key.right = keyInput.right;
             dog.input.key.up = keyInput.up;
             dog.input.key.down = keyInput.down;
-            dog.input.isKeyBasedMovement = true;
         }
     };
 
     GoatGame.SetMouseTouchState = function SetMouseTouchState(socketId, mouseTouchInput) {
-        if (GoatEnhancementHelpers.IsMouseTouchInputEnabled()) {
             const dog = world.dogs[socketId] || {};
             dog.input.mouseTouch = mouseTouchInput;
-            dog.input.isKeyBasedMovement = false;
-        }
     };
 
     GoatGame.ResetGoats = function ResetGoats() {
-        world.goats = [];
-        AddGoats(world.goats, numberOfGoats);
     };
 
     GoatGame.ResetScore = function ResetScore() {
@@ -113,20 +87,6 @@ module.exports = GoatGame;
             goalPost.numberOfGoatsTouched = 0;
         });
     };
-
-    function AddGoats(goats, numberOfGoatsToAdd) {
-        for (let index = 0; index < numberOfGoatsToAdd; ++index) {
-            const spawnArea = 1.5 * goalPostRadius;
-            const goat = {
-                x: spawnArea + Math.random() * (GoatGame.board.width - 2 * spawnArea),
-                y: Math.random() * GoatGame.board.height,
-                r: goatRadius,
-                color: 'green',
-                name: goatNames[Math.floor(Math.random() * goatNames.length)],
-            };
-            goats.push(goat);
-        }
-    }
 
     function AddGoalPosts(goalPosts) {
         goalPosts.push({
@@ -179,8 +139,7 @@ module.exports = GoatGame;
     }
 
     function InitializeGame() {
-        AddGoats(world.goats);
-        AddGoalPosts(world.goalPosts, numberOfGoats);
+        AddGoalPosts(world.goalPosts);
     }
     InitializeGame();
 
@@ -204,40 +163,23 @@ module.exports = GoatGame;
 
     function MoveDog(dog, socketId, distanceToMove) {
         var moveDirection = { x: 0, y: 0 };
-        if (dog.input.isKeyBasedMovement) {
-            if (dog.input.key.left) {
-                moveDirection.x += -1;
-            }
-            if (dog.input.key.up) {
-                moveDirection.y += -1;
-            }
-            if (dog.input.key.right) {
-                moveDirection.x += 1;
-            }
-            if (dog.input.key.down) {
-                moveDirection.y += 1;
-            }
-
-            //If no button is pressed reset frame to zero
-            if (moveDirection.x == 0 && moveDirection.y == 0) {
-                GameAnimation.ResetDogFrame(socketId);
-            } else {
-                GameAnimation.UpdateDogFrame(socketId, dog.input.key);
-            }
-        } else if (
-            Math.abs(dog.x - dog.input.mouseTouch.x) > dog.r / 2 ||
-            Math.abs(dog.y - dog.input.mouseTouch.y) > dog.r / 2
-        ) {
-            // Mouse animation is not implemented
-            moveDirection.x = dog.input.mouseTouch.x - dog.x;
-            moveDirection.y = dog.input.mouseTouch.y - dog.y;
+        if (dog.input.key.left) {
+            moveDirection.x += -1;
+        }
+        if (dog.input.key.up) {
+            moveDirection.y += -1;
+        }
+        if (dog.input.key.right) {
+            moveDirection.x += 1;
+        }
+        if (dog.input.key.down) {
+            moveDirection.y += 1;
         }
 
         moveDirection = GoatMath.NormalizeVec(moveDirection);
         moveDirection = GoatMath.ScaleVec(moveDirection, distanceToMove);
         dog.x += moveDirection.x;
         dog.y += moveDirection.y;
-        dog.spriteFrame = GameAnimation.GetDogFrame(socketId);
 
         DontAllowObjectToGoBeyondTheBoard(dog);
     }
@@ -246,163 +188,6 @@ module.exports = GoatGame;
         for (const id in dogs) {
             MoveDog(dogs[id], id, distanceToMove);
         }
-    }
-
-    function MoveGoatAwayFromDogs(goat, dogs, dogEffectOnGoat) {
-        for (const id in dogs) {
-            const dog = dogs[id];
-
-            var actualGoatDogDistanceSquare = GoatMath.DistanceSquare(goat.x, goat.y, dog.x, dog.y);
-
-            if (actualGoatDogDistanceSquare < goatDogDistanceSquare) {
-                // Move goat towards dog
-                let delta = { x: dog.x - goat.x, y: dog.y - goat.y };
-                delta = GoatMath.NormalizeVec(delta);
-
-                // -1 indicates move goat away from dog
-                delta = GoatMath.ScaleVec(delta, -1);
-
-                dogEffectOnGoat.x += delta.x;
-                dogEffectOnGoat.y += delta.y;
-            }
-        }
-
-        // Scale it to 1
-        dogEffectOnGoat = GoatMath.NormalizeVec(dogEffectOnGoat);
-    }
-
-    function MoveGoatsTowardsCenter(goats, goatsCenterEffectOnGoats) {
-        var center = { x: 0, y: 0 };
-        for (const index in goats) {
-            center.x += goats[index].x;
-            center.y += goats[index].y;
-        }
-
-        if (goats.length > 0) {
-            center.x /= goats.length;
-            center.y /= goats.length;
-        }
-
-        for (const index in goats) {
-            var goat = goats[index];
-            var goatsCenterEffectOnGoat = goatsCenterEffectOnGoats[index];
-
-            if (GoatMath.Distance(goat.x, goat.y, center.x, center.y) > goatComfortZone) {
-                // Move goat towards center
-                let delta = { x: center.x - goat.x, y: center.y - goat.y };
-                delta = GoatMath.NormalizeVec(delta);
-
-                goatsCenterEffectOnGoat.x = delta.x;
-                goatsCenterEffectOnGoat.y = delta.y;
-            }
-        }
-    }
-
-    function AvoidCollisionWithOtherGoats(goats, collisionEffectOnGoats) {
-        for (var moveCandidateIndex = 0; moveCandidateIndex < goats.length; ++moveCandidateIndex) {
-            var moveCandidate = goats[moveCandidateIndex];
-            var collisionEffectOnMoveCandidate = collisionEffectOnGoats[moveCandidateIndex];
-
-            for (var remainingGoatIndex = 0; remainingGoatIndex < goats.length; ++remainingGoatIndex) {
-                // Goat can't collide with itself
-                if (moveCandidateIndex == remainingGoatIndex) {
-                    continue;
-                }
-
-                var remainingGoat = goats[remainingGoatIndex];
-                if (GoatMath.DoCirclesCollide(moveCandidate, remainingGoat)) {
-                    var delta = {
-                        x: remainingGoat.x - moveCandidate.x,
-                        y: remainingGoat.y - moveCandidate.y,
-                    };
-
-                    delta = GoatMath.NormalizeVec(delta);
-                    // Move away from collision
-                    delta = GoatMath.ScaleVec(delta, -1);
-
-                    collisionEffectOnMoveCandidate.x += delta.x;
-                    collisionEffectOnMoveCandidate.y += delta.y;
-                }
-            }
-
-            collisionEffectOnMoveCandidate = GoatMath.NormalizeVec(collisionEffectOnMoveCandidate);
-        }
-    }
-
-    function HerdMoveGoats(goats, dogs, distance, goatScaredDistance, goatCollisionDistance) {
-        // Rules to add here:
-        // - Goat moves away from dogs when they are "close" to goat
-        // - Goat moves towards the "center" of herd
-        // - Goat avoids collision with other goats
-        // - Goat detects collision with corners
-
-        var dogsEffectOnGoats = [];
-        var goatsCenterEffectOnGoats = [];
-        var netEffectOnGoatsScaledToOne = [];
-        var collisionEffectOnGoats = [];
-        for (const index in goats) {
-            dogsEffectOnGoats.push({ x: 0, y: 0 });
-            goatsCenterEffectOnGoats.push({ x: 0, y: 0 });
-            netEffectOnGoatsScaledToOne.push({ x: 0, y: 0 });
-            collisionEffectOnGoats.push({ x: 0, y: 0 });
-        }
-
-        for (const index in goats) {
-            MoveGoatAwayFromDogs(goats[index], dogs, dogsEffectOnGoats[index]);
-        }
-        MoveGoatsTowardsCenter(goats, goatsCenterEffectOnGoats);
-        AvoidCollisionWithOtherGoats(goats, collisionEffectOnGoats);
-
-        for (const index in goats) {
-            var dogsEffectOnGoat = dogsEffectOnGoats[index];
-            var goatsCenterEffectOnGoat = goatsCenterEffectOnGoats[index];
-            var collisionEffectOnGoat = collisionEffectOnGoats[index];
-
-            goatsCenterEffectOnGoat = GoatMath.NormalizeVec(goatsCenterEffectOnGoat);
-            goatsCenterEffectOnGoat = GoatMath.ScaleVec(goatsCenterEffectOnGoat, distance);
-
-            var goat = goats[index];
-
-            goat.x += goatsCenterEffectOnGoat.x;
-            goat.y += goatsCenterEffectOnGoat.y;
-
-            dogsEffectOnGoat = GoatMath.ScaleVec(dogsEffectOnGoat, goatScaredDistance);
-            goat.x += dogsEffectOnGoat.x;
-            goat.y += dogsEffectOnGoat.y;
-
-            collisionEffectOnGoat = GoatMath.ScaleVec(collisionEffectOnGoat, goatCollisionDistance);
-            goat.x += collisionEffectOnGoat.x;
-            goat.y += collisionEffectOnGoat.y;
-        }
-
-        for (const index in goats) {
-            DontAllowObjectToGoBeyondTheBoard(goats[index]);
-        }
-    }
-
-    function RemoveGoatsThatCollideWithGoalPosts(goats, goalPosts) {
-        var goatsToRemove = [];
-
-        for (var goatIndex in goats) {
-            for (var goalIndex in goalPosts) {
-                if (GoatMath.DoCirclesCollide(goalPosts[goalIndex], goats[goatIndex])) {
-                    goatsToRemove.unshift({
-                        goatIndexToRemove: goatIndex,
-                        goalPostTouched: goalIndex,
-                    });
-                    break;
-                }
-            }
-        }
-
-        for (var index in goatsToRemove) {
-            const goalPostTouched = goatsToRemove[index].goalPostTouched;
-            goalPosts[goalPostTouched].numberOfGoatsTouched++;
-
-            goats.splice(goatsToRemove[index].goatIndexToRemove, 1);
-        }
-
-        AddGoats(goats, numberOfGoats - goats.length);
     }
 
     // Physics
@@ -427,27 +212,9 @@ module.exports = GoatGame;
         const dogDistanceToMove = (dogSpeed * actualInterval) / 1000;
         MoveDogs(world.dogs, dogDistanceToMove);
 
-        // distance = velocity * time
-        const goatDistanceToMove = (goatSpeed * actualInterval) / 1000;
-        const goatScaredDistanceToMove = (goatScaredSpeed * actualInterval) / 1000;
-        const goatCollisionDistanceToMove = (goatCollisionSpeed * actualInterval) / 1000;
-
-        HerdMoveGoats(
-            world.goats,
-            world.dogs,
-            goatDistanceToMove,
-            goatScaredDistanceToMove,
-            goatCollisionDistanceToMove
-        );
-
-        RemoveGoatsThatCollideWithGoalPosts(world.goats, world.goalPosts);
-
         if (physicsTime - scoreDecrementTimer > scoreDecrementInterval) {
             scoreDecrementTimer = physicsTime;
             world.goalPosts.forEach((goalPost) => {
-                if (goalPost.numberOfGoatsTouched > 0) {
-                    --goalPost.numberOfGoatsTouched;
-                }
             });
         }
     }, physicsInterval);
