@@ -8,11 +8,14 @@ module.exports = GoatGame;
 
 (function GoatGameNamespace() {
     // Configuration
-    const dogRadius = 10;
+    const dogRadius = 20;
     const dogSpeed = 500; // units per second
     const diagnosticsIntervalMilliseconds = 5000;
     const goalPostRadius = 75;
     const scoreDecrementInterval = 3500;
+    const bulletSpeed = 500;
+    const bulletRadius = 3;
+    const firingSpeed = 1;
 
     GoatGame.board = { width: 800, height: 600 };
 
@@ -25,19 +28,23 @@ module.exports = GoatGame;
 
     const world = {
         dogs: {},
-        goats: [],
         goalPosts: [],
+        bullets: [],
     };
 
     GoatGame.AddDog = function AddDog(socketId, myName, teamId) {
         const randGoalPost = world.goalPosts[teamId];
 
         world.dogs[socketId] = {
-            x: randGoalPost.spawnPoint.x,
-            y: randGoalPost.spawnPoint.y,
+            position: {
+                x: randGoalPost.spawnPoint.x,
+                y: randGoalPost.spawnPoint.y,
+            },
+            direction: {
+                x: 1,
+                y: 0,
+            },
             r: dogRadius,
-            dirX: 1,
-            dirY: 0,
             color: randGoalPost.color,
             name: `${myName}`,
             spriteFrame: {},
@@ -47,9 +54,17 @@ module.exports = GoatGame;
                     right: false,
                     top: false,
                     bottom: false,
+                    shoot: false,
                 },
                 mouseTouch: { x: 0, y: 0 },
                 isKeyBasedMovement: true,
+            },
+            gun: {
+                bulletColor: randGoalPost.color,
+                bulletSpeed: bulletSpeed,
+                bulletRadius: bulletRadius,
+                firingSpeed: firingSpeed,
+                lastFiredTime: 0,
             },
         };
 
@@ -73,6 +88,7 @@ module.exports = GoatGame;
             dog.input.key.right = keyInput.right;
             dog.input.key.up = keyInput.up;
             dog.input.key.down = keyInput.down;
+            dog.input.key.shoot = keyInput.shoot;
         }
     };
 
@@ -145,25 +161,40 @@ module.exports = GoatGame;
     }
     InitializeGame();
 
-    function DontAllowObjectToGoBeyondTheBoard(object) {
-        if (object.x - object.r < 0) {
-            object.x = object.r;
+    function DontAllowObjectToGoBeyondTheBoard(position, adjust) {
+        if (position.x - adjust < 0) {
+            position.x = adjust;
         }
 
-        if (object.y - object.r < 0) {
-            object.y = object.r;
+        if (position.y - adjust < 0) {
+            position.y = adjust;
         }
 
-        if (object.x + object.r > GoatGame.board.width) {
-            object.x = GoatGame.board.width - object.r;
+        if (position.x + adjust > GoatGame.board.width) {
+            position.x = GoatGame.board.width - adjust;
         }
 
-        if (object.y + object.r > GoatGame.board.height) {
-            object.y = GoatGame.board.height - object.r;
+        if (position.y + adjust > GoatGame.board.height) {
+            position.y = GoatGame.board.height - adjust;
         }
     }
 
-    function MoveDog(dog, socketId, distanceToMove) {
+    function FireGun(dog) {
+        const relativePosition = GoatMath.ScaleVec(dog.direction, dog.r);
+        const bulletSpawnPosition = GoatMath.AddVec(dog.position, relativePosition);
+
+        const bullet = {
+            position: bulletSpawnPosition,
+            speed: dog.gun.bulletSpeed,
+            direction: dog.direction,
+            radius: dog.gun.bulletRadius,
+            color: dog.gun.bulletColor,
+        };
+
+        world.bullets.push(bullet);
+    }
+
+    function MoveDog(dog, distanceToMove) {
         let moveDirection = { x: 0, y: 0 };
         if (dog.input.key.left) {
             moveDirection.x += -1;
@@ -180,23 +211,26 @@ module.exports = GoatGame;
 
         moveDirection = GoatMath.NormalizeVec(moveDirection);
         moveDirection = GoatMath.ScaleVec(moveDirection, distanceToMove);
-        dog.x += moveDirection.x;
-        dog.y += moveDirection.y;
+        dog.position = GoatMath.AddVec(dog.position, moveDirection);
 
-        let orientation = { x: 0, y: 0 };
-        orientation.x = dog.input.mouseTouch.x - dog.x;
-        orientation.y = dog.input.mouseTouch.y - dog.y;
-        orientation = GoatMath.NormalizeVec(orientation);
+        let direction = { x: 0, y: 0 };
+        direction.x = dog.input.mouseTouch.x - dog.position.x;
+        direction.y = dog.input.mouseTouch.y - dog.position.y;
+        direction = GoatMath.NormalizeVec(direction);
 
-        dog.dirX = orientation.x;
-        dog.dirY = orientation.y;
+        dog.direction.x = direction.x;
+        dog.direction.y = direction.y;
 
-        DontAllowObjectToGoBeyondTheBoard(dog);
+        DontAllowObjectToGoBeyondTheBoard(dog.position, dog.r);
+
+        if (dog.input.key.shoot) {
+            FireGun(dog);
+        }
     }
 
     function MoveDogs(dogs, distanceToMove) {
         for (const id in dogs) {
-            MoveDog(dogs[id], id, distanceToMove);
+            MoveDog(dogs[id], distanceToMove);
         }
     }
 

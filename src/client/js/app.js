@@ -18,7 +18,7 @@ const context = canvasElement.getContext('2d');
 let scalingRatio = 1;
 
 const input = {
-    key: { up: false, down: false, left: false, right: false },
+    key: { up: false, down: false, left: false, right: false, shoot: false },
     mouseTouchPosition: { x: 0, y: 0 },
     isKeyBasedMovement: true,
 };
@@ -46,6 +46,9 @@ function KeyEvent(keyCode, isKeyPressed) {
             input.key.down = isKeyPressed;
             hasInputChanged = true;
             break;
+        case 32: // Space
+            input.key.shoot = isKeyPressed;
+            hasInputChanged = true;
         default:
     }
 
@@ -57,13 +60,13 @@ function KeyEvent(keyCode, isKeyPressed) {
 
 function RenderDog(dog) {
     const scaledDog = {
-        x: dog.x * scalingRatio,
-        y: dog.y * scalingRatio,
+        x: dog.position.x * scalingRatio,
+        y: dog.position.y * scalingRatio,
         r: dog.r * scalingRatio,
     };
 
-    const gunX = scaledDog.x + dog.dirX * scaledDog.r;
-    const gunY = scaledDog.y + dog.dirY * scaledDog.r;
+    const gunX = scaledDog.x + dog.direction.x * scaledDog.r;
+    const gunY = scaledDog.y + dog.direction.y * scaledDog.r;
 
     context.fillStyle = dog.color;
     context.beginPath();
@@ -110,6 +113,20 @@ function RenderGoalPost(goalPost) {
     context.fillText(score, x - correction, y - correction);
 }
 
+function RenderBullet(bullet) {
+    const position = {
+        x: bullet.position.x * scalingRatio,
+        y: bullet.position.y * scalingRatio,
+    };
+
+    const radius = bullet.radius * scalingRatio;
+
+    context.fillStyle = bullet.color;
+    context.beginPath();
+    context.arc(position.x, position.y, radius, 0, 2 * Math.PI);
+    context.fill();
+}
+
 function RenderMouseTracker() {
     if (input.isKeyBasedMovement) {
         return;
@@ -133,6 +150,10 @@ function Render(world) {
 
     world.goalPosts.forEach((goalPost) => {
         RenderGoalPost(goalPost, context);
+    });
+
+    world.bullets.forEach((bullet) => {
+        RenderBullet(bullet, context);
     });
 
     if (GoatEnhancementHelpers.IsMouseTouchInputEnabled()) {
