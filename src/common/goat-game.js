@@ -36,14 +36,8 @@ module.exports = GoatGame;
         const randGoalPost = world.goalPosts[teamId];
 
         world.dogs[socketId] = {
-            position: {
-                x: randGoalPost.spawnPoint.x,
-                y: randGoalPost.spawnPoint.y,
-            },
-            direction: {
-                x: 1,
-                y: 0,
-            },
+            position: GoatMath.NewVec(randGoalPost.spawnPoint.x, randGoalPost.spawnPoint.y),
+            direction: GoatMath.NewVec(1, 0),
             r: dogRadius,
             color: randGoalPost.color,
             name: `${myName}`,
@@ -56,7 +50,7 @@ module.exports = GoatGame;
                     bottom: false,
                     shoot: false,
                 },
-                mouseTouch: { x: 0, y: 0 },
+                mouseTouch: GoatMath.NewVec(0, 0),
                 isKeyBasedMovement: true,
             },
             gun: {
@@ -195,7 +189,7 @@ module.exports = GoatGame;
     }
 
     function MoveDog(dog, distanceToMove) {
-        let moveDirection = { x: 0, y: 0 };
+        let moveDirection = GoatMath.NewVec(0, 0);
         if (dog.input.key.left) {
             moveDirection.x += -1;
         }
@@ -213,13 +207,9 @@ module.exports = GoatGame;
         moveDirection = GoatMath.ScaleVec(moveDirection, distanceToMove);
         dog.position = GoatMath.AddVec(dog.position, moveDirection);
 
-        let direction = { x: 0, y: 0 };
-        direction.x = dog.input.mouseTouch.x - dog.position.x;
-        direction.y = dog.input.mouseTouch.y - dog.position.y;
+        let direction = GoatMath.SubVec(dog.input.mouseTouch, dog.position);
         direction = GoatMath.NormalizeVec(direction);
-
-        dog.direction.x = direction.x;
-        dog.direction.y = direction.y;
+        dog.direction = direction;
 
         DontAllowObjectToGoBeyondTheBoard(dog.position, dog.r);
 
