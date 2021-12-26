@@ -1,5 +1,6 @@
 const goatEnhancements = require('../../common/goat-enhancements.json');
 const GoatEnhancementHelpers = require('../../common/goat-enhancement-helpers');
+const GoatMath = require('../../common/lib/goat-math');
 
 let adapter = 'game-adapter';
 if (GoatEnhancementHelpers.IsLocalGameEnabled()) {
@@ -114,11 +115,8 @@ function RenderGoalPost(goalPost) {
 }
 
 function RenderBullet(bullet) {
-    const position = {
-        x: bullet.position.x * scalingRatio,
-        y: bullet.position.y * scalingRatio,
-    };
 
+    const position = GoatMath.ScaleVec(bullet.position, scalingRatio);
     const radius = bullet.radius * scalingRatio;
 
     context.fillStyle = bullet.color;
