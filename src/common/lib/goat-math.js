@@ -61,7 +61,21 @@ module.exports = GoatMath;
         return { x: vector.x * scale, y: vector.y * scale };
     };
 
+    // Input:
+    //      vectorOne: { x: <num>, y: <num> }
+    //      vectorTwo: { x: <num>, y: <num> }
+    // Output:
+    //      { x: <num>, y: <num> }
     GoatMath.AddVec = function AddVec(vectorOne, vectorTwo) {
         return { x: vectorOne.x + vectorTwo.x, y: vectorOne.y + vectorTwo.y };
+    };
+
+    // Input:
+    //      vectorOne: { x: <num>, y: <num> }
+    //      vectorTwo: { x: <num>, y: <num> }
+    // Output:
+    //      { x: <num>, y: <num> }
+    GoatMath.SubVec = function SubVec(vectorOne, vectorTwo) {
+        return { x: vectorOne.x - vectorTwo.x, y: vectorOne.y - vectorTwo.y };
     };
 })();
