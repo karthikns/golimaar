@@ -224,6 +224,18 @@ module.exports = GoatGame;
         }
     }
 
+    function ProcessBullet(bullet, interval) {
+        const distanceToMove = bullet.speed * interval;
+        const relativeMovePosition = GoatMath.ScaleVec(bullet.direction, distanceToMove);
+        bullet.position = GoatMath.AddVec(bullet.position, relativeMovePosition);
+    }
+
+    function ProcessBullets(bullets, interval) {
+        bullets.forEach((bullet) => {
+            ProcessBullet(bullet, interval);
+        });
+    }
+
     // Physics
 
     // WARNING: DO NOT CHANGE THIS VALUE
@@ -245,6 +257,8 @@ module.exports = GoatGame;
         // distance = velocity * time
         const dogDistanceToMove = (dogSpeed * actualInterval) / 1000;
         MoveDogs(world.dogs, dogDistanceToMove);
+
+        ProcessBullets(world.bullets, actualInterval / 1000);
 
         if (physicsTime - scoreDecrementTimer > scoreDecrementInterval) {
             scoreDecrementTimer = physicsTime;
