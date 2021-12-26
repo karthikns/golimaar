@@ -12,10 +12,9 @@ module.exports = GoatGame;
     const dogSpeed = 500; // units per second
     const diagnosticsIntervalMilliseconds = 5000;
     const goalPostRadius = 75;
-    const scoreDecrementInterval = 3500;
     const bulletSpeed = 500;
     const bulletRadius = 3;
-    const firingSpeed = 1;
+    const firingSpeed = 3;
 
     const gameStartDate = new Date();
     function GetGameTimeSeconds() {
@@ -179,15 +178,23 @@ module.exports = GoatGame;
     }
 
     function FireGun(dog, gameTime) {
+        const gun = dog.gun;
+
+        if ( (gameTime - gun.lastFiredTime) < (1 / firingSpeed) ) {
+            return;
+        }
+
+        gun.lastFiredTime = gameTime;
+
         const relativePosition = GoatMath.ScaleVec(dog.direction, dog.radius);
         const bulletSpawnPosition = GoatMath.AddVec(dog.position, relativePosition);
 
         const bullet = {
             position: bulletSpawnPosition,
-            speed: dog.gun.bulletSpeed,
+            speed: gun.bulletSpeed,
             direction: dog.direction,
-            radius: dog.gun.bulletRadius,
-            color: dog.gun.bulletColor,
+            radius: gun.bulletRadius,
+            color: gun.bulletColor,
         };
 
         world.bullets.push(bullet);
