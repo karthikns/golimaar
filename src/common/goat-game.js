@@ -38,7 +38,7 @@ module.exports = GoatGame;
         world.dogs[socketId] = {
             position: GoatMath.NewVec(randGoalPost.spawnPoint.x, randGoalPost.spawnPoint.y),
             direction: GoatMath.NewVec(1, 0),
-            r: dogRadius,
+            radius: dogRadius,
             color: randGoalPost.color,
             name: `${myName}`,
             spriteFrame: {},
@@ -174,7 +174,7 @@ module.exports = GoatGame;
     }
 
     function FireGun(dog) {
-        const relativePosition = GoatMath.ScaleVec(dog.direction, dog.r);
+        const relativePosition = GoatMath.ScaleVec(dog.direction, dog.radius);
         const bulletSpawnPosition = GoatMath.AddVec(dog.position, relativePosition);
 
         const bullet = {
@@ -211,7 +211,7 @@ module.exports = GoatGame;
         direction = GoatMath.NormalizeVec(direction);
         dog.direction = direction;
 
-        DontAllowObjectToGoBeyondTheBoard(dog.position, dog.r);
+        DontAllowObjectToGoBeyondTheBoard(dog.position, dog.radius);
 
         if (dog.input.key.shoot) {
             FireGun(dog);
