@@ -4,7 +4,7 @@ module.exports = GoatMath;
 
 (function GoatMathNamespace() {
     // Input:
-    //      x1, y1, x2, y2: <num>
+    //      x1, y1, x2, y2
     // Output:
     //      <num>
     GoatMath.DistanceSquare = function DistanceSquare(x1, y1, x2, y2) {
@@ -12,7 +12,7 @@ module.exports = GoatMath;
     };
 
     // Input:
-    //      x1, y1, x2, y2: <num>
+    //      x1, y1, x2, y2
     // Output:
     //      <num>
     GoatMath.Distance = function Distance(x1, y1, x2, y2) {
@@ -37,9 +37,26 @@ module.exports = GoatMath;
     };
 
     // Input:
+    //      x
+    //      y
+    // Output:
+    //      { x: <num>, y: <num> }
+    GoatMath.NewVec = function NewVec(x, y) {
+        if (!x) {
+            x = 0;
+        }
+
+        if (!y) {
+            y = 0;
+        }
+
+        return { x: x, y: y };
+    }
+
+    // Input:
     //      vector: { x: <num>, y: <num> }
     // Output:
-    //      nothing
+    //      { x: <num>, y: <num> }
     GoatMath.NormalizeVec = function NormalizeVec(vector) {
         const magnitude = Math.sqrt(vector.x * vector.x + vector.y * vector.y);
         const normalizedVector = { x: vector.x, y: vector.y };
@@ -56,7 +73,7 @@ module.exports = GoatMath;
     //      vector: { x: <num>, y: <num> }
     //      scale: <num>
     // Output:
-    //      nothing
+    //      { x: <num>, y: <num> }
     GoatMath.ScaleVec = function ScaleVec(vector, scale) {
         return { x: vector.x * scale, y: vector.y * scale };
     };
