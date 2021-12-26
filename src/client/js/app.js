@@ -61,7 +61,7 @@ function KeyEvent(keyCode, isKeyPressed) {
 
 function RenderDog(dog) {
     const drawPosition = GoatMath.ScaleVec(dog.position, scalingRatio);
-    const drawRadius = dog.r * scalingRatio;
+    const drawRadius = dog.radius * scalingRatio;
 
     const scaleDirection = GoatMath.ScaleVec(dog.direction, drawRadius);
     const drawGunEnd = GoatMath.AddVec(drawPosition, scaleDirection);
