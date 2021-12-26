@@ -20,7 +20,7 @@ let scalingRatio = 1;
 
 const input = {
     key: { up: false, down: false, left: false, right: false, shoot: false },
-    mouseTouchPosition: { x: 0, y: 0 },
+    mouseTouchPosition: GoatMath.NewVec(0, 0),
     isKeyBasedMovement: true,
 };
 
@@ -60,30 +60,27 @@ function KeyEvent(keyCode, isKeyPressed) {
 }
 
 function RenderDog(dog) {
-    const scaledDog = {
-        x: dog.position.x * scalingRatio,
-        y: dog.position.y * scalingRatio,
-        r: dog.r * scalingRatio,
-    };
+    const drawPosition = GoatMath.ScaleVec(dog.position, scalingRatio);
+    const drawRadius = dog.r * scalingRatio;
 
-    const gunX = scaledDog.x + dog.direction.x * scaledDog.r;
-    const gunY = scaledDog.y + dog.direction.y * scaledDog.r;
+    const scaleDirection = GoatMath.ScaleVec(dog.direction, drawRadius);
+    const drawGunEnd = GoatMath.AddVec(drawPosition, scaleDirection);
 
     context.fillStyle = dog.color;
     context.beginPath();
-    context.arc(scaledDog.x, scaledDog.y, scaledDog.r, 0, 2 * Math.PI);
+    context.arc(drawPosition.x, drawPosition.y, drawRadius, 0, 2 * Math.PI);
     context.fill();
 
     context.strokeStyle = '#000000';
     context.beginPath();
     context.lineWidth = 2;
-    context.moveTo(scaledDog.x, scaledDog.y);
-    context.lineTo(gunX, gunY);
+    context.moveTo(drawPosition.x, drawPosition.y);
+    context.lineTo(drawGunEnd.x, drawGunEnd.y);
     context.stroke();
 
-    context.font = `${scaledDog.r}px Verdana`;
+    context.font = `${drawRadius}px Verdana`;
     context.textAlign = 'center';
-    context.fillText(dog.name, scaledDog.x, scaledDog.y + 2.5 * scaledDog.r);
+    context.fillText(dog.name, drawPosition.x, drawPosition.y + 2.5 * drawRadius);
 }
 
 function RenderGoalPost(goalPost) {
@@ -208,7 +205,7 @@ function GetEventPositionRelativeToElement(event) {
 }
 
 function GetTouchPositionRelativeToElement(event) {
-    const position = { x: 0, y: 0 };
+    const position = GoatMath.NewVec(0, 0);
 
     if (event.targetTouches.length >= 1) {
         const firstTouchIndex = 0;
@@ -217,10 +214,6 @@ function GetTouchPositionRelativeToElement(event) {
     }
 
     return position;
-}
-
-function ScalePosition(relativePosition) {
-    return { x: relativePosition.x / scalingRatio, y: relativePosition.y / scalingRatio };
 }
 
 function ListenToGameInput() {
@@ -235,13 +228,13 @@ function ListenToGameInput() {
     if (GoatEnhancementHelpers.IsMouseTouchInputEnabled()) {
         canvasElement.addEventListener('mousemove', function MouseMoveCallback(event) {
             const relativeMousePosition = GetEventPositionRelativeToElement(event);
-            input.mouseTouchPosition = ScalePosition(relativeMousePosition);
+            input.mouseTouchPosition = GoatMath.ScaleVec(relativeMousePosition, 1 / scalingRatio);
             input.isKeyBasedMovement = false;
         });
 
         canvasElement.addEventListener('touchmove', function TouchMoveCallback(event) {
             const relativeTouchPosition = GetTouchPositionRelativeToElement(event);
-            input.mouseTouchPosition = ScalePosition(relativeTouchPosition);
+            input.mouseTouchPosition = GoatMath.ScaleVec(relativeTouchPosition, 1 / scalingRatio);
             input.isKeyBasedMovement = false;
         });
 
