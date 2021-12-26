@@ -17,6 +17,11 @@ module.exports = GoatGame;
     const bulletRadius = 3;
     const firingSpeed = 1;
 
+    const gameStartDate = new Date();
+    function GetGameTimeSeconds() {
+        return (new Date() - gameStartDate) / 1000;
+    }
+
     GoatGame.board = { width: 800, height: 600 };
 
     GoatGame.onRenderState = function RenderStateDummy() {};
@@ -173,7 +178,7 @@ module.exports = GoatGame;
         }
     }
 
-    function FireGun(dog) {
+    function FireGun(dog, gameTime) {
         const relativePosition = GoatMath.ScaleVec(dog.direction, dog.radius);
         const bulletSpawnPosition = GoatMath.AddVec(dog.position, relativePosition);
 
@@ -188,7 +193,9 @@ module.exports = GoatGame;
         world.bullets.push(bullet);
     }
 
-    function MoveDog(dog, distanceToMove) {
+    function MoveDog(dog, actualIntervalSeconds, gameTime) {
+        // distance = velocity * time
+        const distanceToMove = dogSpeed * actualIntervalSeconds;
         let moveDirection = GoatMath.NewVec(0, 0);
         if (dog.input.key.left) {
             moveDirection.x += -1;
@@ -214,25 +221,25 @@ module.exports = GoatGame;
         DontAllowObjectToGoBeyondTheBoard(dog.position, dog.radius);
 
         if (dog.input.key.shoot) {
-            FireGun(dog);
+            FireGun(dog, gameTime);
         }
     }
 
-    function MoveDogs(dogs, distanceToMove) {
+    function MoveDogs(dogs, intervalSeconds, gameTime) {
         for (const id in dogs) {
-            MoveDog(dogs[id], distanceToMove);
+            MoveDog(dogs[id], intervalSeconds, gameTime);
         }
     }
 
-    function ProcessBullet(bullet, interval) {
-        const distanceToMove = bullet.speed * interval;
+    function ProcessBullet(bullet, intervalSeconds) {
+        const distanceToMove = bullet.speed * intervalSeconds;
         const relativeMovePosition = GoatMath.ScaleVec(bullet.direction, distanceToMove);
         bullet.position = GoatMath.AddVec(bullet.position, relativeMovePosition);
     }
 
-    function ProcessBullets(bullets, interval) {
+    function ProcessBullets(bullets, intervalSeconds) {
         bullets.forEach((bullet) => {
-            ProcessBullet(bullet, interval);
+            ProcessBullet(bullet, intervalSeconds);
         });
     }
 
@@ -241,30 +248,21 @@ module.exports = GoatGame;
     // WARNING: DO NOT CHANGE THIS VALUE
     const physicsInterval = 15; // milliseconds
 
-    var physicsTime = new Date();
-    var physicsPerfCounter = new GoatDiagnostics.PerfCounter();
-    var scoreDecrementTimer = new Date();
+    let physicsTimeSeconds = GetGameTimeSeconds();
+    let physicsPerfCounter = new GoatDiagnostics.PerfCounter();
 
     // Keep logic to a minimal here
     setInterval(function () {
-        var newPhysicsTime = new Date();
-        var actualInterval = newPhysicsTime - physicsTime;
-        physicsTime = newPhysicsTime;
+        const newPhysicsTimeSeconds = GetGameTimeSeconds();
+        const intervalSeconds = newPhysicsTimeSeconds - physicsTimeSeconds;
+        physicsTimeSeconds = newPhysicsTimeSeconds;
 
         physicsPerfCounter.Stop();
         physicsPerfCounter.Start();
 
-        // distance = velocity * time
-        const dogDistanceToMove = (dogSpeed * actualInterval) / 1000;
-        MoveDogs(world.dogs, dogDistanceToMove);
+        MoveDogs(world.dogs, intervalSeconds, newPhysicsTimeSeconds);
 
-        ProcessBullets(world.bullets, actualInterval / 1000);
-
-        if (physicsTime - scoreDecrementTimer > scoreDecrementInterval) {
-            scoreDecrementTimer = physicsTime;
-            world.goalPosts.forEach((goalPost) => {
-            });
-        }
+        ProcessBullets(world.bullets, intervalSeconds);
     }, physicsInterval);
 
     // Render
