@@ -60,4 +60,8 @@ module.exports = GoatMath;
     GoatMath.ScaleVec = function ScaleVec(vector, scale) {
         return { x: vector.x * scale, y: vector.y * scale };
     };
+
+    GoatMath.AddVec = function AddVec(vectorOne, vectorTwo) {
+        return { x: vectorOne.x + vectorTwo.x, y: vectorOne.y + vectorTwo.y };
+    };
 })();
