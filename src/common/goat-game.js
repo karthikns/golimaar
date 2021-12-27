@@ -200,7 +200,7 @@ module.exports = GoatGame;
         world.bullets.push(bullet);
     }
 
-    function MoveDog(dog, actualIntervalSeconds, gameTime) {
+    function ProcessDog(dog, actualIntervalSeconds, gameTime) {
         // distance = velocity * time
         const distanceToMove = dogSpeed * actualIntervalSeconds;
         let moveDirection = GoatMath.NewVec(0, 0);
@@ -232,9 +232,9 @@ module.exports = GoatGame;
         }
     }
 
-    function MoveDogs(dogs, intervalSeconds, gameTime) {
+    function ProcessDogs(dogs, intervalSeconds, gameTime) {
         for (const id in dogs) {
-            MoveDog(dogs[id], intervalSeconds, gameTime);
+            ProcessDog(dogs[id], intervalSeconds, gameTime);
         }
     }
 
@@ -248,6 +248,21 @@ module.exports = GoatGame;
         bullets.forEach((bullet) => {
             ProcessBullet(bullet, intervalSeconds);
         });
+    }
+
+    function IsBulletWithinBoundingBox(board, bullet) {
+        return !GoatMath.DoesCircleLeaveBoundingBox(
+            bullet.position,
+            bullet.radius,
+            GoatMath.NewVec(0, 0),
+            GoatMath.NewVec(board.width, board.height)
+        );
+
+    }
+
+    function DetectBoardCollisionBullets(bullets, board) {
+        const IsBulletWithinBoard = IsBulletWithinBoundingBox.bind(null, board);
+        return bullets.filter(IsBulletWithinBoard);
     }
 
     // Physics
@@ -267,9 +282,10 @@ module.exports = GoatGame;
         physicsPerfCounter.Stop();
         physicsPerfCounter.Start();
 
-        MoveDogs(world.dogs, intervalSeconds, newPhysicsTimeSeconds);
-
+        ProcessDogs(world.dogs, intervalSeconds, newPhysicsTimeSeconds);
         ProcessBullets(world.bullets, intervalSeconds);
+
+        world.bullets = DetectBoardCollisionBullets(world.bullets, GoatGame.board);
     }, physicsInterval);
 
     // Render

@@ -20,7 +20,8 @@ module.exports = GoatMath;
     };
 
     // Input:
-    //      circle1, circle2: { x: <num>, y: <num>, r: <num> }
+    //      circle1: { x: <num>, y: <num>, r: <num> }
+    //      circle2: { x: <num>, y: <num>, r: <num> }
     // Output:
     //      <boolean>
     GoatMath.DoCirclesCollide = function DoCirclesCollide(circle1, circle2) {
@@ -35,6 +36,53 @@ module.exports = GoatMath;
 
         return false;
     };
+
+    // Input:
+    //      point: { x: <num>, y: <num>, r: <num> }
+    //      boundingBoxTopLeftPoint: { x: <num>, y: <num>, r: <num> }
+    //      boundingBoxDimensions: { x: <num>, y: <num>, r: <num> }
+    // Output:
+    //      <boolean>
+    GoatMath.DoesPointLeaveBoundingBox = function DoesPointLeaveBoundingBox(
+        point,
+        boundingBoxTopLeftPoint,
+        boundingBoxDimensions) {
+
+        if(point.x > boundingBoxTopLeftPoint.x + boundingBoxDimensions.x)
+            return true;
+
+        if(point.x < boundingBoxTopLeftPoint.x)
+            return true;
+
+        if(point.y > boundingBoxTopLeftPoint.y + boundingBoxDimensions.y)
+            return true;
+
+        if(point.y < boundingBoxTopLeftPoint.y)
+            return true;
+
+        return false;
+    }
+
+    // Input:
+    //      position: { x: <num>, y: <num>, r: <num> }
+    //      radius: <num>
+    //      boundingBoxTopLeftPoint: { x: <num>, y: <num>, r: <num> }
+    //      boundingBoxDimensions: { x: <num>, y: <num>, r: <num> }
+    // Output:
+    //      <boolean>
+    GoatMath.DoesCircleLeaveBoundingBox = function DoesCircleLeaveBoundingBox(
+        position,
+        radius,
+        boundingBoxTopLeftPoint,
+        boundingBoxDimensions) {
+
+        boundingBoxTopLeftPoint.x -= radius;
+        boundingBoxTopLeftPoint.y -= radius;
+        boundingBoxDimensions.x += (2 * radius);
+        boundingBoxDimensions.y += (2 * radius);
+
+        return GoatMath.DoesPointLeaveBoundingBox(position, boundingBoxTopLeftPoint, boundingBoxDimensions);
+    }
 
     // Input:
     //      x
