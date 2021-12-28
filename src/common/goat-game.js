@@ -22,8 +22,6 @@ module.exports = GoatGame;
         return (new Date() - gameStartDate) / 1000;
     }
 
-    GoatGame.board = { width: 800, height: 600 };
-
     GoatGame.onRenderState = function RenderStateDummy() {};
 
     let telemetry;
@@ -32,10 +30,15 @@ module.exports = GoatGame;
     };
 
     const world = {
+        board: { width: 800, height: 600 },
         dogs: {},
         goalPosts: [],
         bullets: [],
     };
+
+    GoatGame.GetBoardDimensions = function GetBoardDimensions() {
+        return world.board;
+    }
 
     GoatGame.AddDog = function AddDog(socketId, myName, teamId) {
         const randGoalPost = world.goalPosts[teamId];
@@ -131,38 +134,38 @@ module.exports = GoatGame;
         });
 
         goalPosts.push({
-            x: GoatGame.board.width,
+            x: world.board.width,
             y: 0,
             r: goalPostRadius,
             color: 'royalblue',
             numberOfGoatsTouched: 0,
             spawnPoint: {
-                x: GoatGame.board.width - 100,
+                x: world.board.width - 100,
                 y: 100,
             },
         });
 
         goalPosts.push({
-            x: GoatGame.board.width,
-            y: GoatGame.board.height,
+            x: world.board.width,
+            y: world.board.height,
             r: goalPostRadius,
             color: 'yellowgreen',
             numberOfGoatsTouched: 0,
             spawnPoint: {
-                x: GoatGame.board.width - 100,
-                y: GoatGame.board.height - 100,
+                x: world.board.width - 100,
+                y: world.board.height - 100,
             },
         });
 
         goalPosts.push({
             x: 0,
-            y: GoatGame.board.height,
+            y: world.board.height,
             r: goalPostRadius,
             color: 'orange',
             numberOfGoatsTouched: 0,
             spawnPoint: {
                 x: 100,
-                y: GoatGame.board.height - 100,
+                y: world.board.height - 100,
             },
         });
     }
@@ -171,24 +174,6 @@ module.exports = GoatGame;
         AddGoalPosts(world.goalPosts);
     }
     InitializeGame();
-
-    function DontAllowObjectToGoBeyondTheBoard(position, adjust) {
-        if (position.x - adjust < 0) {
-            position.x = adjust;
-        }
-
-        if (position.y - adjust < 0) {
-            position.y = adjust;
-        }
-
-        if (position.x + adjust > GoatGame.board.width) {
-            position.x = GoatGame.board.width - adjust;
-        }
-
-        if (position.y + adjust > GoatGame.board.height) {
-            position.y = GoatGame.board.height - adjust;
-        }
-    }
 
     function FireGun(dog, gameTime) {
         const gun = dog.gun;
@@ -242,8 +227,6 @@ module.exports = GoatGame;
         direction = GoatMath.NormalizeVec(direction);
         dog.direction = direction;
 
-        DontAllowObjectToGoBeyondTheBoard(dog.circle.center, dog.circle.radius);
-
         if (dog.input.key.shoot) {
             FireGun(dog, gameTime);
         }
@@ -278,6 +261,16 @@ module.exports = GoatGame;
     function DetectBoardCollisionBullets(bullets, board) {
         const IsBulletWithinBoard = IsBulletWithinBoundingBox.bind(null, board);
         return bullets.filter(IsBulletWithinBoard);
+    }
+
+    function SnapDogsToBoard(dogs, board) {
+        for (const id in dogs) {
+            GoatMath.SnapCircleToBoundingBox(
+                dogs[id].circle,
+                GoatMath.NewVec(0, 0),
+                GoatMath.NewVec(board.width, board.height)
+            );
+        }
     }
 
     function ProcessDogBulletCollisions(world) {
@@ -317,7 +310,9 @@ module.exports = GoatGame;
 
     function ProcessCollisions(world) {
         ProcessDogBulletCollisions(world);
-        world.bullets = DetectBoardCollisionBullets(world.bullets, GoatGame.board);
+
+        SnapDogsToBoard(world.dogs, world.board);
+        world.bullets = DetectBoardCollisionBullets(world.bullets, world.board);
     }
 
     // Physics

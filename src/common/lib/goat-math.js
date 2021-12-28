@@ -65,6 +65,18 @@ module.exports = GoatMath;
         return false;
     }
 
+    GoatMath.SnapCircleToBoundingBox = function SnapCircleToBoundingBox(
+        circle,
+        boundingBoxTopLeftPoint,
+        boundingBoxDimensions) {
+
+        circle.center.x = Math.max(circle.center.x, boundingBoxTopLeftPoint.x + circle.radius);
+        circle.center.x = Math.min(circle.center.x, boundingBoxTopLeftPoint.x + boundingBoxDimensions.x - circle.radius);
+
+        circle.center.y = Math.max(circle.center.y, boundingBoxTopLeftPoint.y + circle.radius);
+        circle.center.y = Math.min(circle.center.y, boundingBoxTopLeftPoint.y + boundingBoxDimensions.y - circle.radius);
+    }
+
     // Input:
     //      position: { center: { x: <num>, y: <num> }, r: <num> }
     //      radius: <num>
