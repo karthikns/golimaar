@@ -78,7 +78,7 @@ io.on('connection', function ConnectionCallback(socket) {
     });
 
     socket.on('game-client-init-request', function GetGameStatusCallback() {
-        io.to(socket.id).emit('game-client-init-status', GoatGame.board);
+        io.to(socket.id).emit('game-client-init-status', GoatGame.GetBoardDimensions());
     });
 
     socket.on('game-add-dog', function AddDogCallback(dogName, teamId) {
