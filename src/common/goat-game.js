@@ -40,9 +40,11 @@ module.exports = GoatGame;
         const randGoalPost = world.goalPosts[teamId];
 
         world.dogs[socketId] = {
-            position: GoatMath.NewVec(randGoalPost.spawnPoint.x, randGoalPost.spawnPoint.y),
             direction: GoatMath.NewVec(1, 0),
-            radius: dogRadius,
+            circle: {
+                center: GoatMath.NewVec(randGoalPost.spawnPoint.x, randGoalPost.spawnPoint.y),
+                radius: dogRadius,
+            },
             color: randGoalPost.color,
             name: `${myName}`,
             spriteFrame: {},
@@ -186,14 +188,16 @@ module.exports = GoatGame;
 
         gun.lastFiredTime = gameTime;
 
-        const relativePosition = GoatMath.ScaleVec(dog.direction, dog.radius);
-        const bulletSpawnPosition = GoatMath.AddVec(dog.position, relativePosition);
+        const relativePosition = GoatMath.ScaleVec(dog.direction, dog.circle.radius);
+        const bulletSpawnPosition = GoatMath.AddVec(dog.circle.center, relativePosition);
 
         const bullet = {
-            position: bulletSpawnPosition,
+            circle: {
+                center: bulletSpawnPosition,
+                radius: gun.bulletRadius,
+            },
             speed: gun.bulletSpeed,
             direction: dog.direction,
-            radius: gun.bulletRadius,
             color: gun.bulletColor,
         };
 
@@ -219,13 +223,13 @@ module.exports = GoatGame;
 
         moveDirection = GoatMath.NormalizeVec(moveDirection);
         moveDirection = GoatMath.ScaleVec(moveDirection, distanceToMove);
-        dog.position = GoatMath.AddVec(dog.position, moveDirection);
+        dog.circle.center = GoatMath.AddVec(dog.circle.center, moveDirection);
 
-        let direction = GoatMath.SubVec(dog.input.mouseTouch, dog.position);
+        let direction = GoatMath.SubVec(dog.input.mouseTouch, dog.circle.center);
         direction = GoatMath.NormalizeVec(direction);
         dog.direction = direction;
 
-        DontAllowObjectToGoBeyondTheBoard(dog.position, dog.radius);
+        DontAllowObjectToGoBeyondTheBoard(dog.circle.center, dog.circle.radius);
 
         if (dog.input.key.shoot) {
             FireGun(dog, gameTime);
@@ -241,7 +245,7 @@ module.exports = GoatGame;
     function ProcessBullet(bullet, intervalSeconds) {
         const distanceToMove = bullet.speed * intervalSeconds;
         const relativeMovePosition = GoatMath.ScaleVec(bullet.direction, distanceToMove);
-        bullet.position = GoatMath.AddVec(bullet.position, relativeMovePosition);
+        bullet.circle.center = GoatMath.AddVec(bullet.circle.center, relativeMovePosition);
     }
 
     function ProcessBullets(bullets, intervalSeconds) {
@@ -252,8 +256,7 @@ module.exports = GoatGame;
 
     function IsBulletWithinBoundingBox(board, bullet) {
         return !GoatMath.DoesCircleLeaveBoundingBox(
-            bullet.position,
-            bullet.radius,
+            bullet.circle,
             GoatMath.NewVec(0, 0),
             GoatMath.NewVec(board.width, board.height)
         );

@@ -60,8 +60,8 @@ function KeyEvent(keyCode, isKeyPressed) {
 }
 
 function RenderDog(dog) {
-    const drawPosition = GoatMath.ScaleVec(dog.position, scalingRatio);
-    const drawRadius = dog.radius * scalingRatio;
+    const drawPosition = GoatMath.ScaleVec(dog.circle.center, scalingRatio);
+    const drawRadius = dog.circle.radius * scalingRatio;
 
     const scaleDirection = GoatMath.ScaleVec(dog.direction, drawRadius);
     const drawGunEnd = GoatMath.AddVec(drawPosition, scaleDirection);
@@ -113,8 +113,8 @@ function RenderGoalPost(goalPost) {
 
 function RenderBullet(bullet) {
 
-    const position = GoatMath.ScaleVec(bullet.position, scalingRatio);
-    const radius = bullet.radius * scalingRatio;
+    const position = GoatMath.ScaleVec(bullet.circle.center, scalingRatio);
+    const radius = bullet.circle.radius * scalingRatio;
 
     context.fillStyle = bullet.color;
     context.beginPath();

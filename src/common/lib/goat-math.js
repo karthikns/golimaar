@@ -4,30 +4,32 @@ module.exports = GoatMath;
 
 (function GoatMathNamespace() {
     // Input:
-    //      x1, y1, x2, y2
+    //
     // Output:
     //      <num>
-    GoatMath.DistanceSquare = function DistanceSquare(x1, y1, x2, y2) {
-        return (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
+    GoatMath.DistanceSquare = function DistanceSquare(vectorOne, vectorTwo) {
+        const xDifferential = vectorTwo.x - vectorOne.x;
+        const yDifferential = vectorTwo.y - vectorOne.y;
+        return (xDifferential) * (xDifferential) + (yDifferential) * (yDifferential);
     };
 
     // Input:
-    //      x1, y1, x2, y2
+    //
     // Output:
     //      <num>
-    GoatMath.Distance = function Distance(x1, y1, x2, y2) {
-        return Math.sqrt(GoatMath.DistanceSquare(x1, y1, x2, y2));
+    GoatMath.Distance = function Distance(vectorOne, vectorTwo) {
+        return Math.sqrt(GoatMath.DistanceSquare(vectorOne, vectorTwo));
     };
 
     // Input:
-    //      circle1: { x: <num>, y: <num>, r: <num> }
-    //      circle2: { x: <num>, y: <num>, r: <num> }
+    //      circleOne: { center: { x: <num>, y: <num> }, radius: <num> }
+    //      circleTwo: { center: { x: <num>, y: <num> }, radius: <num> }
     // Output:
     //      <boolean>
-    GoatMath.DoCirclesCollide = function DoCirclesCollide(circle1, circle2) {
-        const distanceBetweenCentersSquare = this.DistanceSquare(circle1.x, circle1.y, circle2.x, circle2.y);
+    GoatMath.DoCirclesCollide = function DoCirclesCollide(circleOne, circleTwo) {
+        const distanceBetweenCentersSquare = this.DistanceSquare(circleOne.center, circleTwo.center);
 
-        const sumOfRadius = circle1.r + circle2.r;
+        const sumOfRadius = circleOne.radius + circleTwo.radius;
         const sumOfRadiusSquare = sumOfRadius * sumOfRadius;
 
         if (distanceBetweenCentersSquare < sumOfRadiusSquare) {
@@ -38,9 +40,9 @@ module.exports = GoatMath;
     };
 
     // Input:
-    //      point: { x: <num>, y: <num>, r: <num> }
-    //      boundingBoxTopLeftPoint: { x: <num>, y: <num>, r: <num> }
-    //      boundingBoxDimensions: { x: <num>, y: <num>, r: <num> }
+    //      point: { x: <num>, y: <num> }
+    //      boundingBoxTopLeftPoint: { x: <num>, y: <num> }
+    //      boundingBoxDimensions: { x: <num>, y: <num> }
     // Output:
     //      <boolean>
     GoatMath.DoesPointLeaveBoundingBox = function DoesPointLeaveBoundingBox(
@@ -64,24 +66,23 @@ module.exports = GoatMath;
     }
 
     // Input:
-    //      position: { x: <num>, y: <num>, r: <num> }
+    //      position: { center: { x: <num>, y: <num> }, r: <num> }
     //      radius: <num>
-    //      boundingBoxTopLeftPoint: { x: <num>, y: <num>, r: <num> }
-    //      boundingBoxDimensions: { x: <num>, y: <num>, r: <num> }
+    //      boundingBoxTopLeftPoint: { x: <num>, y: <num> }
+    //      boundingBoxDimensions: { x: <num>, y: <num> }
     // Output:
     //      <boolean>
     GoatMath.DoesCircleLeaveBoundingBox = function DoesCircleLeaveBoundingBox(
-        position,
-        radius,
+        circle,
         boundingBoxTopLeftPoint,
         boundingBoxDimensions) {
 
-        boundingBoxTopLeftPoint.x -= radius;
-        boundingBoxTopLeftPoint.y -= radius;
-        boundingBoxDimensions.x += (2 * radius);
-        boundingBoxDimensions.y += (2 * radius);
+        boundingBoxTopLeftPoint.x -= circle.radius;
+        boundingBoxTopLeftPoint.y -= circle.radius;
+        boundingBoxDimensions.x += (2 * circle.radius);
+        boundingBoxDimensions.y += (2 * circle.radius);
 
-        return GoatMath.DoesPointLeaveBoundingBox(position, boundingBoxTopLeftPoint, boundingBoxDimensions);
+        return GoatMath.DoesPointLeaveBoundingBox(circle.center, boundingBoxTopLeftPoint, boundingBoxDimensions);
     }
 
     // Input:
