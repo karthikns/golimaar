@@ -15,6 +15,7 @@ module.exports = GoatGame;
     const bulletSpeed = 500;
     const bulletRadius = 3;
     const firingSpeed = 3;
+    const shotsAvailable = 1;
 
     const gameStartDate = new Date();
     function GetGameTimeSeconds() {
@@ -40,14 +41,15 @@ module.exports = GoatGame;
         const randGoalPost = world.goalPosts[teamId];
 
         world.dogs[socketId] = {
-            direction: GoatMath.NewVec(1, 0),
             circle: {
                 center: GoatMath.NewVec(randGoalPost.spawnPoint.x, randGoalPost.spawnPoint.y),
                 radius: dogRadius,
             },
+            direction: GoatMath.NewVec(1, 0),
+            teamId: teamId,
             color: randGoalPost.color,
             name: `${myName}`,
-            spriteFrame: {},
+            hp: 1,
             input: {
                 key: {
                     left: false,
@@ -64,6 +66,7 @@ module.exports = GoatGame;
                 bulletSpeed: bulletSpeed,
                 bulletRadius: bulletRadius,
                 firingSpeed: firingSpeed,
+                shotsAvailable: shotsAvailable,
                 lastFiredTime: 0,
             },
         };
@@ -82,6 +85,10 @@ module.exports = GoatGame;
     };
 
     GoatGame.SetInputKeyState = function SetInputKeyState(socketId, keyInput) {
+        if (!world.dogs.hasOwnProperty(socketId)) {
+            return;
+        }
+
         const dog = world.dogs[socketId];
         if (dog) {
             dog.input.key.left = keyInput.left;
@@ -93,8 +100,12 @@ module.exports = GoatGame;
     };
 
     GoatGame.SetMouseTouchState = function SetMouseTouchState(socketId, mouseTouchInput) {
-            const dog = world.dogs[socketId] || {};
-            dog.input.mouseTouch = mouseTouchInput;
+        if (!world.dogs.hasOwnProperty(socketId)) {
+            return;
+        }
+
+        const dog = world.dogs[socketId];
+        dog.input.mouseTouch = mouseTouchInput;
     };
 
     GoatGame.ResetGoats = function ResetGoats() {
@@ -199,6 +210,8 @@ module.exports = GoatGame;
             speed: gun.bulletSpeed,
             direction: dog.direction,
             color: gun.bulletColor,
+            teamId: dog.teamId,
+            shotsAvailable: gun.shotsAvailable,
         };
 
         world.bullets.push(bullet);
@@ -260,12 +273,51 @@ module.exports = GoatGame;
             GoatMath.NewVec(0, 0),
             GoatMath.NewVec(board.width, board.height)
         );
-
     }
 
     function DetectBoardCollisionBullets(bullets, board) {
         const IsBulletWithinBoard = IsBulletWithinBoundingBox.bind(null, board);
         return bullets.filter(IsBulletWithinBoard);
+    }
+
+    function ProcessDogBulletCollisions(world) {
+        let dogBulletCollisionPairs = [];
+        world.bullets.forEach((bullet, index) => {
+            for (const id in world.dogs) {
+                if(GoatMath.DoCirclesCollide(world.dogs[id].circle, bullet.circle)) {
+                    dogBulletCollisionPairs.push({ dogId: id, bulletIndex: index });
+                }
+            }
+        });
+
+        dogBulletCollisionPairs.forEach(dogBulletCollisionPair => {
+            const dog = world.dogs[dogBulletCollisionPair.dogId];
+            const bullet = world.bullets[dogBulletCollisionPair.bulletIndex];
+
+            if (dog.teamId == bullet.teamId) {
+                return;
+            }
+
+            if(bullet.shotsAvailable <= 0) {
+                return;
+            }
+
+            dog.hp--;
+            bullet.shotsAvailable--;
+        });
+
+        for (const id in world.dogs) {
+            if (world.dogs[id].hp <= 0) {
+                GoatGame.RemoveDog(id);
+            }
+        }
+
+        world.bullets = world.bullets.filter(bullet => bullet.shotsAvailable > 0);
+    }
+
+    function ProcessCollisions(world) {
+        ProcessDogBulletCollisions(world);
+        world.bullets = DetectBoardCollisionBullets(world.bullets, GoatGame.board);
     }
 
     // Physics
@@ -288,7 +340,7 @@ module.exports = GoatGame;
         ProcessDogs(world.dogs, intervalSeconds, newPhysicsTimeSeconds);
         ProcessBullets(world.bullets, intervalSeconds);
 
-        world.bullets = DetectBoardCollisionBullets(world.bullets, GoatGame.board);
+        ProcessCollisions(world);
     }, physicsInterval);
 
     // Render
