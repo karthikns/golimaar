@@ -16,6 +16,7 @@ module.exports = GoatGame;
     const bulletRadius = 3;
     const firingSpeed = 3;
     const shotsAvailable = 1;
+    const bulletLifespan = 5;
 
     const gameStartDate = new Date();
     function GetGameTimeSeconds() {
@@ -71,6 +72,7 @@ module.exports = GoatGame;
                 firingSpeed: firingSpeed,
                 shotsAvailable: shotsAvailable,
                 lastFiredTime: 0,
+                bulletLifespan: bulletLifespan,
             },
         };
 
@@ -184,22 +186,77 @@ module.exports = GoatGame;
 
         gun.lastFiredTime = gameTime;
 
-        const relativePosition = GoatMath.ScaleVec(dog.direction, dog.circle.radius);
-        const bulletSpawnPosition = GoatMath.AddVec(dog.circle.center, relativePosition);
+        if (dog.teamId % 3 == 0) {
+            const relativePosition = GoatMath.ScaleVec(dog.direction, dog.circle.radius);
+            const bulletSpawnPosition = GoatMath.AddVec(dog.circle.center, relativePosition);
 
-        const bullet = {
-            circle: {
-                center: bulletSpawnPosition,
-                radius: gun.bulletRadius,
-            },
-            speed: gun.bulletSpeed,
-            direction: dog.direction,
-            color: gun.bulletColor,
-            teamId: dog.teamId,
-            shotsAvailable: gun.shotsAvailable,
-        };
+            const bullet = {
+                circle: {
+                    center: bulletSpawnPosition,
+                    radius: gun.bulletRadius,
+                },
+                speed: gun.bulletSpeed,
+                direction: dog.direction,
+                color: gun.bulletColor,
+                teamId: dog.teamId,
+                shotsAvailable: gun.shotsAvailable,
+                lifespan: gun.bulletLifespan,
+                creationTime: gameTime,
+            };
 
-        world.bullets.push(bullet);
+            world.bullets.push(bullet);
+        }
+        else if (dog.teamId % 3 == 1) {
+            for(let y = -1; y <= 1; ++y) {
+                for(let x = -1; x <= 1; ++x) {
+                    if (!x && !y) {
+                        continue;
+                    }
+
+                    const direction = GoatMath.NewVec(x, y);
+                    const normalizedDirection = GoatMath.NormalizeVec(direction);
+                    const relativePosition = GoatMath.ScaleVec(normalizedDirection, dog.circle.radius);
+                    const bulletSpawnPosition = GoatMath.AddVec(dog.circle.center, relativePosition);
+
+                    const bullet = {
+                        circle: {
+                            center: bulletSpawnPosition,
+                            radius: gun.bulletRadius,
+                        },
+                        speed: gun.bulletSpeed,
+                        direction: normalizedDirection,
+                        color: gun.bulletColor,
+                        teamId: dog.teamId,
+                        shotsAvailable: gun.shotsAvailable,
+                        lifespan: .15,
+                        creationTime: gameTime,
+                    };
+        
+                    world.bullets.push(bullet);        
+                }
+            }
+        }
+        else
+        {
+            const relativePosition = GoatMath.ScaleVec(dog.direction, dog.circle.radius);
+            const bulletSpawnPosition = GoatMath.AddVec(dog.circle.center, relativePosition);
+
+            const bullet = {
+                circle: {
+                    center: bulletSpawnPosition,
+                    radius: gun.bulletRadius * 2,
+                },
+                speed: 0,
+                direction: dog.direction,
+                color: gun.bulletColor,
+                teamId: dog.teamId,
+                shotsAvailable: gun.shotsAvailable,
+                lifespan: gun.bulletLifespan,
+                creationTime: gameTime,
+            };
+
+            world.bullets.push(bullet);
+        }
     }
 
     function ProcessDog(dog, actualIntervalSeconds, gameTime) {
@@ -244,10 +301,12 @@ module.exports = GoatGame;
         bullet.circle.center = GoatMath.AddVec(bullet.circle.center, relativeMovePosition);
     }
 
-    function ProcessBullets(bullets, intervalSeconds) {
+    function ProcessBullets(bullets, intervalSeconds, gameTime) {
         bullets.forEach((bullet) => {
             ProcessBullet(bullet, intervalSeconds);
         });
+
+        return bullets.filter(bullet => gameTime - bullet.creationTime < bullet.lifespan);
     }
 
     function IsBulletWithinBoundingBox(board, bullet) {
@@ -333,7 +392,7 @@ module.exports = GoatGame;
         physicsPerfCounter.Start();
 
         ProcessDogs(world.dogs, intervalSeconds, newPhysicsTimeSeconds);
-        ProcessBullets(world.bullets, intervalSeconds);
+        world.bullets = ProcessBullets(world.bullets, intervalSeconds, newPhysicsTimeSeconds);
 
         ProcessCollisions(world);
     }, physicsInterval);

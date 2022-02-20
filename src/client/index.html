@@ -8,22 +8,22 @@
 
   <body>
     <p>
+      <b><i>golimaar</i></b>
       <a href="index.html">[Home]</a>
       <a href="stats.html">[Stats]</a>
       <a href="admin.html">[Admin]</a>
       <a href="about.html">[About]</a>
-      <a href="https://forms.gle/vk2nkjAQNcqwT1kj7"><b>[Feedback]</b></a>
-    </p>
-    <p>
-      <b>Objective:</b> Move goats to the corner of your team's color;
-      <b>Input:</b> Arrow Keys, Mouse, Touch;
-      <b><i>Optimized for desktop</i></b>
+      <a href="https://forms.gle/dgrWkb3t4mpPqHgo6"><b>[Feedback]</b></a>
     </p>
     <div id="lobbyElement">
-      Dog Name: <input id="dogNameElement" type="text"/>
+      <h3><i>Optimized for desktop play</i></h3>
+      <p>
+        <b>Objective:</b> You have a gun, you have enemies. Time to pew pew 
+      </p>
+      Player Name <input id="dogNameElement" type="text"/>
       <br>
       <br/>
-      Select Team:
+      Select Team &nbsp;
       <select id="teamSelectElement">
         <option value="0">Red</option>
         <option value="1">Blue</option>
@@ -36,6 +36,17 @@
       <br/>
       <br/>
       <input type="button" value="View" onClick="StartViewMode()"></input>
+      <br/>
+      <br/>
+      <br/>
+      <p>
+        <b>Input:</b>
+        <ul>
+          <li>Move: Arrow Keys / WASD</li>
+          <li>Shoot: Space bar</li>
+          <li>Direction: Mouse / Touch</li>
+        </ul>
+      </p>
     </div>
     <div>
       <canvas id="myCanvas" style="border: 1px solid #000000;" hidden="true">
