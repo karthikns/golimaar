@@ -71,9 +71,9 @@ function RenderDog(dog) {
     context.arc(drawPosition.x, drawPosition.y, drawRadius, 0, 2 * Math.PI);
     context.fill();
 
-    context.strokeStyle = '#000000';
+    context.strokeStyle = 'black';
     context.beginPath();
-    context.lineWidth = 2;
+    context.lineWidth = dog.circle.radius / 6;
     context.moveTo(drawPosition.x, drawPosition.y);
     context.lineTo(drawGunEnd.x, drawGunEnd.y);
     context.stroke();
@@ -136,8 +136,34 @@ function RenderMouseTracker() {
     context.fill();
 }
 
+function DrawGrid(context, topLeft, dimensions) {
+    const scaledGridSize = 100 * scalingRatio;
+    const scaledTopLeft = GoatMath.ScaleVec(topLeft, scalingRatio);
+    const scaledDimensions = GoatMath.ScaleVec(dimensions, scalingRatio);
+
+    context.strokeStyle = 'lightgray';
+    context.lineWidth = 1;
+
+    context.beginPath();
+
+    for (let x = scaledTopLeft.x; x < scaledDimensions.x; x += scaledGridSize)
+    {
+        context.moveTo(x, scaledTopLeft.y);
+        context.lineTo(x, scaledDimensions.y);
+    }
+
+    for (let y = scaledTopLeft.y; y < scaledDimensions.y; y += scaledGridSize)
+    {
+        context.moveTo(scaledTopLeft.x, y);
+        context.lineTo(scaledDimensions.x, y);
+    }
+
+    context.stroke(); 
+}
+
 function Render(world) {
     context.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    DrawGrid(context, GoatMath.NewVec(0, 0), GoatMath.NewVec(gameDesiredDimensions.width, gameDesiredDimensions.height));
 
     Object.values(world.dogs).forEach((dog) => {
         RenderDog(dog);
